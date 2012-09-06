@@ -55,7 +55,7 @@ class _NodeInterface(object):
 class FormFiller(object):
 
     def __init__(self, form=None):
-        if form:
+        if form is not None:
             self.read(form)
 
     def _handle_input_text(self, field):
@@ -118,7 +118,7 @@ class FormFiller(object):
         assert button_name in self.buttons
         form_params = self.form_data.copy()
         form_params[button_name] = self.buttons[button_name]
-        for key, value in kwargs:
+        for key, value in kwargs.iteritems():
             if key not in self.all_fields:
                 raise KeyError("Invalid form field name {0}".format(key))
         form_params.update(kwargs)
