@@ -52,6 +52,31 @@ class _NodeInterface(object):
         raise NotImplementedError()
 
 
+def abs_url(url, base_url):
+    if url.startswith("http://") or url.startswith("https://"):
+        # http://example.com/anything ->
+        #     http://example.com/anything
+        return url
+    elif url.startswith("//"):
+        # //example.com/anything  + https://example.com/anything ->
+        #     https://example.com/anything
+        parsed = urlparse.urlsplit(base_url)
+        return parsed.scheme + ":" + url
+    elif url.startswith("/"):
+        # /anything + http://example.com/something ->
+        #     http://example.com/anything
+        parsed = urlparse.urlsplit(base_url)
+        url_parts = (parsed.scheme, parsed.netloc, url, '', '')
+    else:
+        # anything + http://example.com/dir1/path1 ->
+        #     http://example.com/dir1/anything
+        parsed = urlparse.urlsplit(base_url)
+        base_path = parsed.path.rsplit('/', 1)[0]
+        path = base_path + "/" + url
+        url_parts = (parsed.scheme, parsed.netloc, path, '', '')
+    return urlparse.urlunsplit(url_parts)
+
+
 class FormFiller(object):
 
     def __init__(self, form=None):
@@ -127,30 +152,11 @@ class FormFiller(object):
     def click(self, button_name):
         return self.fill(button_name)
 
-    def _abs_url(self, url, base_url):
-        if url.startswith("http://") or url.startswith("https://"):
-            # http://example.com/anything ->
-            #     http://example.com/anything
-            return url
-        elif url.startswith("/"):
-            # /anything + http://example.com/something ->
-            #     http://example.com/anything
-            parsed = urlparse.urlsplit(base_url)
-            url_parts = (parsed.scheme, parsed.netloc, url, '', '')
-        else:
-            # anything + http://example.com/dir1/path1 ->
-            #     http://example.com/dir1/anything
-            parsed = urlparse.urlsplit(base_url)
-            base_path = parsed.path.rsplit('/', 1)[0]
-            path = base_path + "/" + url
-            url_parts = (parsed.scheme, parsed.netloc, path, '', '')
-        return urlparse.urlunsplit(url_parts)
-
     def get_action_url(self, form_page_url):
         if 'action' not in self.form.attrib:
             return form_page_url
         action = self.form.attrib['action']
-        return self._abs_url(action, form_page_url)
+        return abs_url(action, form_page_url)
 
     def get_method(self):
         return self.form.attrib.get('method', 'GET')
