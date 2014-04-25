@@ -67,9 +67,19 @@ def abs_url(url, base_url):
         #     http://example.com/anything
         parsed = urlparse.urlsplit(base_url)
         url_parts = (parsed.scheme, parsed.netloc, url, '', '')
+    elif not url:
+        # a@href=''
+        return base_url
+    elif url[0] == "#":
+        # a@href='#hash'
+        return base_url
+    elif url[0] == "?":
+        # a@href='?k=v'
+        parsed = urlparse.urlsplit(base_url)
+        url_parts = (parsed.scheme, parsed.netloc, parsed.path, url[1:], '')
     else:
-        # anything + http://example.com/dir1/path1 ->
-        #     http://example.com/dir1/anything
+        # rel/path + http://example.com/dir1/path1 ->
+        #     http://example.com/dir1/rel/path
         parsed = urlparse.urlsplit(base_url)
         base_path = parsed.path.rsplit('/', 1)[0]
         path = base_path + "/" + url
